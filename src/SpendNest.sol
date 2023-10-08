@@ -73,6 +73,9 @@ function createSavingsClub() external{
 /**
 * join savings club
  */
+  // ##create a goal
+  // __ percentage will be shared
+
  function joinSavingsClub() external{
 
  }
@@ -80,10 +83,34 @@ function createSavingsClub() external{
    /**
    * move fund to savings club
     */
+    function addFundSavingsClub() external{
+
+    }
+
+    /**
+    *remove fund from saving
+    */
+    function removeFundSavingsClub() external{
+
+    }
 
 
-    // __ percentage will be shared
-    // ##create a goal
+    
+   
     //lending & borrowing __ only people that have savings in thesaving club can borrow
     //Comet,Polygon, Tableland and Compound.
+    /**
+    *Borrow 
+     */
+    function lend() external{
+
+    }
+
+    /**
+    * Payback lend Protocol
+    */
+    function payback() external{
+        
+    }
+
 }
