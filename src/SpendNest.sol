@@ -12,5 +12,5 @@ contract SpendNest{
                         // __ percentage will be shared 
         // ##create a goal 
         //lending & borrowing __ only people that have savings in thesaving club can borrow
-
+        //Comet,Polygon, Tableland and Compound.
 }
