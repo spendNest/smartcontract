@@ -62,7 +62,24 @@ function grantAccessToFund() external{
 
 }
 
+
     // Savings club_ ___ deposit to spark protocol
+/** 
+* create savings club
+*/
+function createSavingsClub() external{
+
+}
+/**
+* join savings club
+ */
+ function joinSavingsClub() external{
+
+ }
+   
+   /**
+   * move fund to savings club
+    */
 
 
     // __ percentage will be shared
