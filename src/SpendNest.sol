@@ -1,16 +1,24 @@
 // SPDX-License_Identifier:MIT
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Icompound} from "./interfaces/Icompound.sol";
 pragma solidity ^0.8.20;
 
 contract SpendNest {
     // how do we have access to money been shared
     // how do i know that i am been shared money 
 
+    using SafeERC20 for IERC20;
+    
+
+    
+
     struct userAccount {
         uint256 totalSavings;
         uint256 availableBalance;
-        uint256 sharedBalance; 
+        uint256 sharedBalance;
         uint256 noOfClubs;
+        uint256 borrowedBalance;
         // sharedFund mysharedFund;
         
     }
@@ -52,6 +60,8 @@ contract SpendNest {
     address TokenAccepted;
     address owner = msg.sender;
 
+    Icompound compound;
+
     // collect payment as sDai
 
     // EVENTS
@@ -64,6 +74,10 @@ contract SpendNest {
     event Withdrawal(address user, uint256 indexed amount, uint256 indexed time);
 
     event FundWithdraw(address sender, address indexed receiver, uint indexed amount, uint256 indexed time);
+
+    constructor(address _compound) {
+        compound = Icompound(_compound);
+    }
 
     function set_Token(address _tokenAceppted) external {
         require(msg.sender == owner, "Not Owner");
@@ -78,7 +92,8 @@ contract SpendNest {
             totalSavings: 0,
             availableBalance: 0,
             sharedBalance: 0,
-            noOfClubs: 0
+            noOfClubs: 0,
+            borrowedBalance: 0
         });
 
         myAccount[user] = newUser;
@@ -211,7 +226,56 @@ Deposit function
     /**
      *Borrow
      */
-    function lend() external {}
+
+    function depositCompound(address asset, uint256 amount) external {
+        uint balance = IERC20(asset).balanceOf(address(this));
+        require(balance >= amount, "Insuficient balance");
+        IERC20(asset).safeApprove(address(compound), amount);
+        compound.supply(asset, amount);
+    }
+
+    function withdrawCompound(address asset, uint256 amount) external {
+        require(
+            compound.balanceOf(address(this)) <= amount,
+            "insufficient balance"
+        );
+        compound.withdraw(asset, amount);
+    }
+
+    function depositCollateralCompound(address asset, uint256 amount) internal {
+        uint balance = IERC20(asset).balanceOf(address(this));
+        require(balance >= amount, "Insuficient balance");
+        // IERC20(asset).safeApprove(address(compound), amount);
+        IERC20(asset).approve(address(compound), amount);
+        compound.supply(asset, amount);
+    }
+
+    function lend(uint256 _amount) external {
+        address user = msg.sender;
+        userAccount storage _user = myAccount[user];
+        uint256 collateral = _amount * 2;
+        uint256 availableBal = _user.availableBalance;
+        require( collateral > _amount, "Insufficient collateral");
+        availableBal -= collateral;
+        depositCollateralCompound(TokenAccepted, collateral);
+        _user.borrowedBalance += _amount;
+        borrow(asset, _amount);
+        
+
+
+    }
+
+    function borrow(address asset, uint amount) external {
+        require(
+            compound.isBorrowCollateralized(address(this)),
+            "insufficient collateral"
+        );
+        compound.withdraw(asset, amount);
+    }
+
+    
+
+    
 
     /**
      * Payback lend Protocol
