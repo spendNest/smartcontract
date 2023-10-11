@@ -85,6 +85,11 @@ contract SpendNest {
         uint indexed amount,
         uint256 indexed time
     );
+    event Borrowed(
+        address indexed sender,
+        uint256 indexed amount,
+        uint256 indexed time
+    );
 
     function set_Token(address _tokenAceppted) external {
         require(msg.sender == owner, "Not Owner");
@@ -256,8 +261,37 @@ Deposit function
         ICompound(_compound).supply(token, _amount);
         personalClubCreated storage _myClub = personalClubs[_owner][_clubName];
         _myClub.Personalsavings += _amount;
+        _myOwnAccount.totalSavings += _amount;
 
         emit PersonalClubDeposit(_owner, _amount, block.timestamp);
+    }
+
+    function loanToPayment() external returns (uint) {
+        userAccount storage _myOwnAccount = myAccount[_owner];
+        
+    }
+
+    /**
+withdraw personal savings
+*/
+    function withdrawPersonalSavings(string memory _clubName) external {
+        address _owner = msg.sender;
+        require(stringExists[_owner][_clubName], "CLUB_DOES_NOT_EXIST");
+        userAccount storage _myOwnAccount = myAccount[_owner];
+        personalClubCreated storage _myClub = personalClubs[_owner][_clubName];
+
+        require(
+            _myOwnAccount.AmountToBePayedBack == 0,
+            "YOU_HAVE_UNPAID_OVERDRAFT"
+        );
+        uint time = _myClub.endDate;
+        require(block.timestamp >= time, "SAVINGS_NOT_READY_FOR_HARVEST");
+        uint savings = _myClub.Personalsavings;
+
+        require(savings > 0, "NO_SAVINGS");
+        _myClub.Personalsavings = 0;
+        _myOwnAccount.totalSavings -= savings;
+        _myOwnAccount.availableBalance += savings;
     }
 
     /**
@@ -341,6 +375,7 @@ Deposit function
         _balance -= _amount;
         ICompound(_compound).supply(token, _amount);
         createClub.myBalance[_user] += _amount;
+        _myOwnAccount.totalSavings += _amount;
         emit PublicClubDeposit(_user, _amount, block.timestamp);
     }
 
@@ -354,7 +389,8 @@ Deposit function
      */
 
     function showPublicDeposit()
-        external view
+        external
+        view
         returns (
             string[] memory,
             uint[] memory,
@@ -379,25 +415,42 @@ Deposit function
             savingsGoal[i] = currentClub.savingsGoal;
             totalParticipant[i] = currentClub.totalParticipant;
         }
-         return (clubName, startDate, endDate, savingsGoal, totalParticipant);
+        return (clubName, startDate, endDate, savingsGoal, totalParticipant);
     }
 
     /**
-    *show public club savings
+     *show public club savings
      */
 
-     function showMyPublicSavings(string memory _clubName) external view returns(uint){
-         ClubCreated storage createClub = publicClubs[_clubName];
-         return createClub.myBalance[msg.sender];
-
-     }
+    function showMyPublicSavings(
+        string memory _clubName
+    ) external view returns (uint) {
+        ClubCreated storage createClub = publicClubs[_clubName];
+        return createClub.myBalance[msg.sender];
+    }
 
     //lending & borrowing __ only people that have savings in thesaving club can borrow
     //Comet,Polygon, Tableland and Compound.
     /**
      *Borrow
+     * user should only be able to borrow 20% of savings 
+     * base asset can be borrowed using withdraw function
+     * borrow usdc
+
      */
-    function lend() external {}
+    function lend(uint256 _amount) external {
+        address user = msg.sender;
+        address _compound = compound;
+        address token = TokenAccepted;
+        userAccount storage _myOwnAccount = myAccount[user];
+        uint256 balance = _myOwnAccount.totalSavings;
+        uint256 percent = ((20 * balance) / 100);
+        require(_amount <= percent, "ONLY_20%_CAN_BE_BORROWED");
+        _myOwnAccount.BorrowedAmount += _amount;
+        ICompound(_compound).withdraw(token, _amount);
+        _myOwnAccount.availableBalance += _amount;
+        emit Borrowed(user, _amount, block.timestamp);
+    }
 
     /**
      * Payback lend Protocol
