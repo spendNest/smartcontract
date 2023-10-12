@@ -267,8 +267,10 @@ Deposit function
     }
 
     function loanToPayment() external returns (uint) {
+        address _compound = compound;
         userAccount storage _myOwnAccount = myAccount[_owner];
-        
+        ICompound(_compound).getUtilization();
+
     }
 
     /**
