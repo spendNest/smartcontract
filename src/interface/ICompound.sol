@@ -59,6 +59,6 @@ interface ICompound {
     function baseTrackingAccrued(
         address account
     ) external view returns (uint64);
-    function getUtilization() public view returns (uint)
-    function getBorrowRate(uint utilization) public view returns (uint64)
+    function getUtilization() external view returns (uint);
+    function getBorrowRate(uint utilization) external view returns (uint64);
 }

@@ -1,12 +1,20 @@
 // SPDX-License_Identifier:MIT
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {ICompound} from "./interface/ICompound.sol";
+import "./factory.sol";
 pragma solidity ^0.8.20;
 
+interface Ifactory {
+    function set_Token(address _tokenAceppted) external;
+    function createAcount () external;
+    function _returnAddress(address _contractOwner) external view returns(address);
+    function tokenAddress () external view returns(address);
+}
 contract SpendNest {
     // how do we have access to money been shared
     // how do i know that i am been shared money
 
+    
     struct userAccount {
         uint256 totalSavings;
         uint256 availableBalance;
@@ -16,6 +24,8 @@ contract SpendNest {
         uint256 AmountToBePayedBack;
         // sharedFund mysharedFund;
     }
+
+    
 
     // struct sharedFund{
 
@@ -50,6 +60,7 @@ contract SpendNest {
     string[] publicClubsNames;
 
     address TokenAccepted;
+    Ifactory factory;
     address owner = msg.sender;
     address compound;
 
@@ -91,26 +102,29 @@ contract SpendNest {
         uint256 indexed time
     );
 
-    function set_Token(address _tokenAceppted) external {
-        require(msg.sender == owner, "Not Owner");
-        TokenAccepted = _tokenAceppted;
-    }
 
-    function createAccount() external {
-        address user = msg.sender;
-        require(accountCreated[user] == false, "ACCOUNT_ALREADY_EXIST");
-        accountCreated[user] = true;
-        userAccount memory newUser = userAccount({
-            totalSavings: 0,
-            availableBalance: 0,
-            sharedBalance: 0,
-            noOfClubs: 0,
-            BorrowedAmount: 0,
-            AmountToBePayedBack: 0
-        });
+    constructor (address _factory) {
 
-        myAccount[user] = newUser;
+        factory = Ifactory(_factory);
+        TokenAccepted =  factory.tokenAddress();
     }
+    
+
+    // function createAccount() external {
+    //     address user = msg.sender;
+    //     require(accountCreated[user] == false, "ACCOUNT_ALREADY_EXIST");
+    //     accountCreated[user] = true;
+    //     userAccount memory newUser = userAccount({
+    //         totalSavings: 0,
+    //         availableBalance: 0,
+    //         sharedBalance: 0,
+    //         noOfClubs: 0,
+    //         BorrowedAmount: 0,
+    //         AmountToBePayedBack: 0
+    //     });
+
+    //     myAccount[user] = newUser;
+    // }
 
     //Depositing stable_coin ___they can deposit to our contract
     /**
@@ -139,7 +153,6 @@ Deposit function
     }
 
     function withdraw(uint _amount, address _user) internal {
-        require(accountCreated[_user], "ACCOUNT_DOES_NOT_EXIST");
 
         userAccount storage myBalance = myAccount[_user];
         uint256 BalanceLeft = myBalance.availableBalance;
@@ -266,12 +279,13 @@ Deposit function
         emit PersonalClubDeposit(_owner, _amount, block.timestamp);
     }
 
-    function loanToPayment() external returns (uint) {
-        address _compound = compound;
-        userAccount storage _myOwnAccount = myAccount[_owner];
-        ICompound(_compound).getUtilization();
+    // function loanToPayment() external returns (uint) {
+    //     address _compound = compound;
+    //     userAccount storage _myOwnAccount = myAccount[_owner];
+    //     ICompound(_compound).getUtilization();
+    //     Icompound 
 
-    }
+    // }
 
     /**
 withdraw personal savings
