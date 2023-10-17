@@ -252,8 +252,8 @@ Deposit function
         newClub.startDate = block.timestamp;
         newClub.endDate = _endDate;
         newClub.savingsGoal = _savingsGoal;
-
         PersonalClubName[address(this)].push(_clubName);
+        stringExists[address(this)][_clubName] = true;
     }
 
     /**

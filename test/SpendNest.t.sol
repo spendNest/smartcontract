@@ -65,6 +65,13 @@ contract SpendNestTest is Test {
 
       vm.prank(user2);
        childBank2.viewAccount();
+vm.prank(user1);
+    childBank.grantAccessToFund(account2, 1000000);
+vm.prank(user1);
+childBank.createPersonalSavingsClub("christmas cloth", 4 days, 2000);
+vm.prank(user1);
+childBank.createPersonalSavingsClub("christmas cloth", 4 days, 2000);
+       
       
       // childBank.showMyPersonalCreatedClub();
      
