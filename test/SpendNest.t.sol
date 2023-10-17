@@ -4,9 +4,11 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import "../src/SpendNest.sol";
 import "../src/factory.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 
 contract SpendNestTest is Test {
-
+   using SafeERC20 for IERC20; 
    factory Bank;
     address owner = 0x7CCbb89862f5cA9A83562Aa6cB8Af686c89A3701;
     address user1 = 0x2b90c6615546a35f19Da18ffb665cdba4c634a13;
@@ -29,5 +31,14 @@ contract SpendNestTest is Test {
     function testCreateAccount() public {
         vm.startPrank(user1);
         Bank.createAccount();
+
+    }
+    function testdeposit() public {
+      testCreateAccount();
+       address account = Bank._returnAddress(user1);
+      SpendNest childBank = SpendNest(account);
+      IERC20(usdc).approve(address(childBank), 1000000);
+      childBank.depositFund(500000);
+
     }
 }
