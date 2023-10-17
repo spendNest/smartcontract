@@ -70,7 +70,7 @@ contract factory {
                 ) {
                     revert("exists");
                 }
-                break;
+                // break;
             }
         }
         return true;
@@ -87,7 +87,7 @@ contract factory {
     ) external {
         address _user = msg.sender;
         require(userExists[_user], "ACCOUNT_DOES_NOT_EXIST");
-        require(checkNameExist(_clubName) == false, "CLUB_NAME_EXIST");
+        require(checkNameExist(_clubName) == true, "CLUB_NAME_EXIST");
         ClubCreated storage createClub = publicClubs[_clubName];
         createClub.clubName = _clubName;
         createClub.startDate = _startDate;
@@ -95,8 +95,24 @@ contract factory {
         createClub.savingsGoal = _savingsGoal;
         createClub.totalParticipant += 1;
         createClub.aUser[_user] = true;
+         publicClubsNames.push(_clubName);
     }
 
+function checkClubExist(string memory _name) internal view returns (bool) {
+        string[] memory allNames = publicClubsNames;
+        if (allNames.length > 0) {
+            for (uint256 index = 0; index < allNames.length; index++) {
+                if (
+                    keccak256(bytes(_name)) == keccak256(bytes(allNames[index]))
+                ) {
+                // break;
+                    return true;
+                }
+               break;
+            }
+        }
+        return true;
+    }
     /**
      * join savings club
      */
@@ -106,10 +122,11 @@ contract factory {
     function joinSavingsClub(string memory _clubName) external {
         address _user = msg.sender;
         require(userExists[_user], "ACCOUNT_DOES_NOT_EXIST");
-        require(checkNameExist(_clubName), "CLUB_DOES_NOT_EXIST");
+        require(checkClubExist(_clubName) == true, "CLUB_DOES_NOT_EXIST");
         ClubCreated storage createClub = publicClubs[_clubName];
-        createClub.aUser[_user] = true;
+        require(createClub.aUser[_user] == false, "YOU_BELONG_TO_THE_CLUB");
         createClub.totalParticipant += 1;
+        createClub.aUser[_user] = true;
     }
 
     /**
@@ -117,13 +134,14 @@ contract factory {
      */
     function addFundSavingsClub(
         string memory _clubName,
-        uint256 _amount
+        uint256 _amount,
+        address _user
     ) external {
-        address _user = msg.sender;
+        // address _user = msg.sender;
         address token = tokenAccepted;
         address _compound = compound;
         require(userExists[_user], "ACCOUNT_DOES_NOT_EXIST");
-        require(checkNameExist(_clubName), "CLUB_DOES_NOT_EXIST");
+        require(checkClubExist(_clubName), "CLUB_DOES_NOT_EXIST");
         ClubCreated storage createClub = publicClubs[_clubName];
         //userAccount storage _myOwnAccount = myAccount[_user];
         uint _balance = IERC20(token).balanceOf(_user);
@@ -133,14 +151,15 @@ contract factory {
             "SAVINGS_CLUB_NOT_STARTED"
         );
         require(_balance >= _amount, "INSUFFICIENT_BALANCE");
-        require(block.timestamp <= createClub.endDate, "SAVINGS_ENDED");
+        require(block.timestamp >= createClub.endDate, "SAVINGS_ENDED");
         require(createClub.aUser[_user], "NOT_A_USER");
+        // IERC20(token).approve(_compound, _amount);
         //IERC20(token).approve(_compound, _amount);
+        
         ICompound(_compound).supply(token, _amount);
         createClub.myBalance[_user] += _amount;
         //_myOwnAccount.totalSavings += _amount;
 
-        //emit PublicClubDeposit(_user, _amount, block.timestamp);
     }
 
     function showPublicData()

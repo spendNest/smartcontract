@@ -44,8 +44,8 @@ contract SpendNestTest is Test {
       vm.startPrank(user1);
        address account = Bank._returnAddress(user1);
       SpendNest childBank = SpendNest(account);
-      IERC20(usdc).approve(address(childBank), 1000000);
-      childBank.depositFund(500000);
+      IERC20(usdc).approve(address(childBank), 500000000);
+      childBank.depositFund(50000000);
        childBank.viewAccount();
        vm.startPrank(user1);
        childBank.withdrawFund(10000);
@@ -56,22 +56,62 @@ contract SpendNestTest is Test {
          Bank.createAccount();
       address account2 = Bank._returnAddress(user2);
       SpendNest childBank2 = SpendNest(account2);
-      IERC20(usdc).approve(address(childBank2), 1000000);
-      childBank2.depositFund(400000);
+      IERC20(usdc).approve(address(childBank2), 50000000);
+      childBank2.depositFund(40000000);
       vm.stopPrank();
 
       vm.prank(user1);
-      childBank.transferFund(account2, 200000);
+      childBank.transferFund(account2, 2000);
 
       vm.prank(user2);
        childBank2.viewAccount();
 vm.prank(user1);
     childBank.grantAccessToFund(account2, 1000000);
 vm.prank(user1);
-childBank.createPersonalSavingsClub("christmas cloth", 4 days, 2000);
+childBank.createPersonalSavingsClub("christmas cloth", 4 days, 20000000);
 vm.prank(user1);
-childBank.createPersonalSavingsClub("christmas cloth", 4 days, 2000);
-       
+childBank.createPersonalSavingsClub("christmas shoe", 4 days, 2000);
+
+vm.prank(user1);
+childBank.showMyPersonalCreatedClub();
+
+vm.prank(user1);
+childBank.showSingleClub("christmas shoe");
+vm.prank(user1);
+childBank.depositToPersonalClub("christmas shoe", 50000);
+
+// vm.warp(15 days);
+// vm.prank(user1);
+// childBank.withdrawPersonalSavings("christmas shoe");
+
+vm.prank(user1);
+childBank.createPublicSav("my club", block.timestamp, 6 days, 2000);
+vm.prank(user2);
+childBank2.createPublicSav("my club c", block.timestamp, 6 days, 2000);
+vm.prank(user1);
+childBank.createPublicSav("my club d", block.timestamp, 6 days, 2000);
+
+
+vm.prank(user2);
+childBank2.createPublicSav("my club f", block.timestamp, 6 days, 2000);
+vm.prank(user1);
+childBank.createPublicSav("my club g", block.timestamp, 6 days, 2000);
+
+
+vm.prank(user1);
+childBank.joinPublicClub("my club c");
+uint b = IERC20(usdc).balanceOf(account);
+console.log(b);
+
+// vm.prank(user1);
+// IERC20(usdc).approve(compound, 20);
+vm.prank(user2);
+childBank2.addFundpublic("my club c", 2);
+// childBank
+// childBank.joinPublicClub("my club g");
+
+
+
       
       // childBank.showMyPersonalCreatedClub();
      

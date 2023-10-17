@@ -26,7 +26,8 @@ interface Ifactory {
 
     function addFundSavingsClub(
         string memory _clubName,
-        uint256 _amount
+        uint256 _amount,
+        address _user
     ) external;
 
     function showPublicData()
@@ -339,7 +340,7 @@ Deposit function
         _myClub.Personalsavings = 0;
         totalSavings -= savings;
 
-        ICompound(compound).withdraw(address(this), savings);
+        ICompound(compound).withdraw(TokenAccepted, savings);
     }
 
     function createPublicSav(
@@ -361,8 +362,8 @@ Deposit function
     }
 
     function addFundpublic(string memory _clubName, uint256 _amount) external {
-        IERC20(TokenAccepted).approve(compound, _amount);
-        factory.addFundSavingsClub(_clubName, _amount);
+        // IERC20(TokenAccepted).approve(compound, _amount);
+        factory.addFundSavingsClub(_clubName, _amount, address(this));
         totalSavings += _amount;
         emit PublicClubDeposit(address(this), _amount, block.timestamp);
     }
