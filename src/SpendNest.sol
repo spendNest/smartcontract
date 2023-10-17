@@ -122,9 +122,10 @@ contract SpendNest {
         uint256 indexed time
     );
 
-    constructor(address _factory, address _token) {
+    constructor(address _factory, address _token, address _compound) {
         factory = Ifactory(_factory);
         TokenAccepted = _token;
+        compound = _compound;
         owner = msg.sender;
     }
 
@@ -134,21 +135,7 @@ contract SpendNest {
         _;
     }
 
-    // function createAccount() external {
-    //     address user = msg.sender;
-    //     require(accountCreated[user] == false, "ACCOUNT_ALREADY_EXIST");
-    //     accountCreated[user] = true;
-    //     userAccount memory newUser = userAccount({
-    //         totalSavings: 0,
-    //         availableBalance: 0,
-    //         sharedBalance: 0,
-    //         noOfClubs: 0,
-    //         BorrowedAmount: 0,
-    //         AmountToBePayedBack: 0
-    //     });
 
-    //     myAccount[user] = newUser;
-    // }
 
     /**
      *
@@ -180,7 +167,8 @@ Deposit function
     /**
      * View my fund
     //  */
-    function viewAccount() external view returns (uint256, uint256, uint256, uint256, uint256, uint256) {
+    // issue wit borrow balance
+    function viewAccount() external view returns (uint256, uint256,  uint256, uint256,uint256, uint256) {
         address user = address(this);
         uint256 availableBal = IERC20(TokenAccepted).balanceOf(user);
         uint256 borrowedAmount = ICompound(compound).borrowBalanceOf(user);
@@ -194,14 +182,7 @@ Deposit function
         );
     }
 
-    // function withdraw(uint _amount, address _user) internal {
-
-    //     userAccount storage myBalance = myAccount[_user];
-    //     uint256 BalanceLeft = myBalance.availableBalance;
-    //     require(BalanceLeft >= _amount, "INSUFFICIENT_AMOUNT");
-    //     // uint amountLeft = BalanceLeft - _amount;
-    //     // myBalance.availableBalance = amountLeft;
-    // }
+  
 
     // withdrawing stable coin
     /**
@@ -249,7 +230,15 @@ Deposit function
         sharedBalance += _amount;
         sharedUsers.push(_spender);
     }
-
+function supply(uint _amount) public{
+       address token = TokenAccepted;
+        address _compound = compound;
+        //userAccount storage _myOwnAccount = myAccount[_owner];
+        uint _balance = IERC20(TokenAccepted).balanceOf(address(this));
+        require(_balance >= _amount, "INSUFFICIENT_BALANCE");
+        IERC20(token).approve(_compound, _amount);
+        ICompound(_compound).supply(token, _amount);
+}
     // Savings club_ ___ deposit to spark protocol
     /**
      * create savings club
