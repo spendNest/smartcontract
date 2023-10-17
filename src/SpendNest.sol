@@ -122,11 +122,11 @@ contract SpendNest {
         uint256 indexed time
     );
 
-    constructor(address _factory, address _token, address _compound) {
+    constructor(address _factory, address _token, address _compound, address _owner) {
         factory = Ifactory(_factory);
         TokenAccepted = _token;
         compound = _compound;
-        owner = msg.sender;
+        owner = _owner;
     }
 
     modifier onlyOwner() {
@@ -143,7 +143,7 @@ contract SpendNest {
      */
 
     function checkUser(address _user) internal view {
-        require(factory.userExist(_user), "RECEIVER_DOES_NOT_EXIST");
+        require(factory.userExist(_user) == true, "RECEIVER_DOES_NOT_EXIST");
     }
 
     //Depositing stable_coin ___they can deposit to our contract
@@ -152,7 +152,7 @@ Deposit function
  */
     function depositFund(uint _amount) external {
         address user = msg.sender;
-        checkUser(user);
+        checkUser(address(this));
         uint256 senderBal = IERC20(TokenAccepted).balanceOf(user);
         require(senderBal >= _amount, "senderBal not sufficient");
         require(
@@ -230,15 +230,6 @@ Deposit function
         sharedBalance += _amount;
         sharedUsers.push(_spender);
     }
-function supply(uint _amount) public{
-       address token = TokenAccepted;
-        address _compound = compound;
-        //userAccount storage _myOwnAccount = myAccount[_owner];
-        uint _balance = IERC20(TokenAccepted).balanceOf(address(this));
-        require(_balance >= _amount, "INSUFFICIENT_BALANCE");
-        IERC20(token).approve(_compound, _amount);
-        ICompound(_compound).supply(token, _amount);
-}
     // Savings club_ ___ deposit to spark protocol
     /**
      * create savings club

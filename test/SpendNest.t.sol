@@ -32,18 +32,40 @@ contract SpendNestTest is Test {
     }
 
     function testCreateAccount() public {
-        vm.startPrank(user1);
+        vm.prank(user1);
         Bank.createAccount();
+        
+
 
     }
     
     function testdeposit() public {
       testCreateAccount();
+      vm.startPrank(user1);
        address account = Bank._returnAddress(user1);
       SpendNest childBank = SpendNest(account);
       IERC20(usdc).approve(address(childBank), 1000000);
       childBank.depositFund(500000);
        childBank.viewAccount();
+       vm.startPrank(user1);
+       childBank.withdrawFund(10000);
+       vm.stopPrank();
+
+       vm.startPrank(user2);
+      //   vm.prank(user2);
+         Bank.createAccount();
+      address account2 = Bank._returnAddress(user2);
+      SpendNest childBank2 = SpendNest(account2);
+      IERC20(usdc).approve(address(childBank2), 1000000);
+      childBank2.depositFund(400000);
+      vm.stopPrank();
+
+      vm.prank(user1);
+      childBank.transferFund(account2, 200000);
+
+      vm.prank(user2);
+       childBank2.viewAccount();
+      
       // childBank.showMyPersonalCreatedClub();
      
 

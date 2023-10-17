@@ -36,10 +36,11 @@ contract factory {
     }
 
     function createAccount() external {
-        SpendNest newContract = new SpendNest(address(this), tokenAccepted, compound);
+        address owner = msg.sender;
+        SpendNest newContract = new SpendNest(address(this), tokenAccepted, compound,owner);
         childContracts.push(address(newContract));
-        myAddress[msg.sender] = address(newContract);
-        userExists[msg.sender] = true;
+        myAddress[owner] = address(newContract);
+        userExists[address(newContract)] = true;
     }
 
     function _returnAddress(
