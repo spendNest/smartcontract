@@ -122,9 +122,9 @@ contract SpendNest {
         uint256 indexed time
     );
 
-    constructor(address _factory) {
+    constructor(address _factory, address _token) {
         factory = Ifactory(_factory);
-        TokenAccepted = factory.tokenAddress();
+        TokenAccepted = _token;
         owner = msg.sender;
     }
 
