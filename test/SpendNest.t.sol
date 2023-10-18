@@ -117,7 +117,12 @@ vm.prank(user1);
 childBank.getPublicClubFund("my club c");
 
 vm.prank(user1);
-childBank.withdrawPublic("my club c");
+childBank.lend(50);
+
+// vm.prank(user1);
+// childBank.withdrawPublic("my club c");
+vm.prank(user1);
+childBank.payBackAmount();
 // childBank
 // childBank.joinPublicClub("my club g");
 

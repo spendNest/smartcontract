@@ -45,7 +45,7 @@ interface Ifactory {
         string memory _clubName
     ) external view returns (uint);
 
-    function withdrawPublicClub(string memory _clubName, address _user) external returns(uint256);
+    function withdrawPublicClub(string memory _clubName, address _user) external returns(uint256, uint256);
 }
 
 contract SpendNest {
@@ -408,8 +408,9 @@ Deposit function
      */
     //  function 
 
-    function withdrawPublic(string memory _clubName) external{
-    uint256 _balance = factory.withdrawPublicClub(_clubName, address(this));
+    function withdrawPublic(string memory _clubName) external returns(uint) {
+   (uint256 _balance, uint256 _amount)= factory.withdrawPublicClub(_clubName, address(this));
+    totalSavings -= _amount;
         ICompound(compound).withdraw(TokenAccepted, _balance);
     }
 
@@ -434,7 +435,7 @@ Deposit function
         BorrowedAmount += _amount;
         ICompound(_compound).withdraw(token, _amount);
         //_myOwnAccount.availableBalance += _amount;
-        emit Borrowed(user, _amount, block.timestamp);
+        emit Borrowed(address(this), _amount, block.timestamp);
     }
 
     /**
@@ -454,5 +455,9 @@ Deposit function
     /**
      * returns the amount to be paid back to com
      */
-    function payBackAmount() public {}
+    function payBackAmount() public returns(uint256){
+         address user = address(this);
+        uint256 borrowBal = ICompound(compound).borrowBalanceOf(user);
+        return(borrowBal);
+    }
 }

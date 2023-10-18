@@ -203,7 +203,7 @@ function checkClubExist(string memory _name) internal view returns (bool) {
     /**
      *remove fund from saving
      */
-    function withdrawPublicClub(string memory _clubName, address _user) external returns(uint256){
+    function withdrawPublicClub(string memory _clubName, address _user) external returns(uint256, uint256){
         // address _user = msg.sender;
         address _compound = compound;
         require(userExists[_user], "ACCOUNT_DOES_NOT_EXIST");
@@ -214,12 +214,12 @@ function checkClubExist(string memory _name) internal view returns (bool) {
         if (borrowBal == 0 ) {
             uint256 bal= amount;
             createClub.myBalance[_user] = 0;
-            return bal;
+            return (bal, amount);
             // ICompound(_compound).withdraw(tokenAccepted, amount);
         }  else if(borrowBal > 0 && amount > borrowBal){
            uint256 rem = amount - borrowBal;
            createClub.myBalance[_user] = 0;
-           return rem;
+           return (rem, amount);
         //    ICompound(_compound).withdrawFrom(tokenAccepted, rem);
 
         } else {
@@ -230,6 +230,9 @@ function checkClubExist(string memory _name) internal view returns (bool) {
 
     }
 
+function lendPublic() external returns(uint256){
+
+}
 
 
 
