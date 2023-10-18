@@ -156,7 +156,7 @@ function checkClubExist(string memory _name) internal view returns (bool) {
         // IERC20(token).approve(_compound, _amount);
         //IERC20(token).approve(_compound, _amount);
         
-        ICompound(_compound).supply(token, _amount);
+        // ICompound(_compound).supply(token, _amount);
         createClub.myBalance[_user] += _amount;
         //_myOwnAccount.totalSavings += _amount;
 
@@ -203,24 +203,28 @@ function checkClubExist(string memory _name) internal view returns (bool) {
     /**
      *remove fund from saving
      */
-    function withdrawPublicClub(string memory _clubName) external {
-        address _user = msg.sender;
+    function withdrawPublicClub(string memory _clubName, address _user) external returns(uint256){
+        // address _user = msg.sender;
         address _compound = compound;
         require(userExists[_user], "ACCOUNT_DOES_NOT_EXIST");
-        require(checkNameExist(_clubName), "CLUB_DOES_NOT_EXIST");
+        require(checkClubExist(_clubName), "CLUB_DOES_NOT_EXIST");
         ClubCreated storage createClub = publicClubs[_clubName];
         uint256 borrowBal = ICompound(_compound).borrowBalanceOf(_user);
         uint256 amount = createClub.myBalance[_user];
         if (borrowBal == 0 ) {
-            ICompound(_compound).withdraw(tokenAccepted, amount);
+            uint256 bal= amount;
             createClub.myBalance[_user] = 0;
+            return bal;
+            // ICompound(_compound).withdraw(tokenAccepted, amount);
         }  else if(borrowBal > 0 && amount > borrowBal){
            uint256 rem = amount - borrowBal;
-           ICompound(_compound).withdraw(tokenAccepted, rem);
            createClub.myBalance[_user] = 0;
+           return rem;
+        //    ICompound(_compound).withdrawFrom(tokenAccepted, rem);
 
         } else {
-            revert("YOU_HAVE_UNPAID_OVERDRAFT");
+             revert("YOU_HAVE_UNPAID_OVERDRAFT");
+
         }
         
 

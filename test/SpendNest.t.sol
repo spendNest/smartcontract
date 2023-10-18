@@ -44,8 +44,8 @@ contract SpendNestTest is Test {
       vm.startPrank(user1);
        address account = Bank._returnAddress(user1);
       SpendNest childBank = SpendNest(account);
-      IERC20(usdc).approve(address(childBank), 500000000);
-      childBank.depositFund(50000000);
+      IERC20(usdc).approve(address(childBank), 800000000);
+      childBank.depositFund(80000000);
        childBank.viewAccount();
        vm.startPrank(user1);
        childBank.withdrawFund(10000);
@@ -80,9 +80,9 @@ childBank.showSingleClub("christmas shoe");
 vm.prank(user1);
 childBank.depositToPersonalClub("christmas shoe", 50000);
 
-// vm.warp(15 days);
-// vm.prank(user1);
-// childBank.withdrawPersonalSavings("christmas shoe");
+vm.warp(block.timestamp + 15 days);
+vm.prank(user1);
+childBank.withdrawPersonalSavings("christmas shoe");
 
 vm.prank(user1);
 childBank.createPublicSav("my club", block.timestamp, 6 days, 2000);
@@ -105,8 +105,19 @@ console.log(b);
 
 // vm.prank(user1);
 // IERC20(usdc).approve(compound, 20);
-vm.prank(user2);
-childBank2.addFundpublic("my club c", 2);
+console.log(address(Bank));
+console.log(address(childBank));
+vm.prank(user1);
+childBank.addFundpublic("my club c", 3000000);
+
+vm.prank(user1);
+childBank.getPublicSavingData();
+
+vm.prank(user1);
+childBank.getPublicClubFund("my club c");
+
+vm.prank(user1);
+childBank.withdrawPublic("my club c");
 // childBank
 // childBank.joinPublicClub("my club g");
 
