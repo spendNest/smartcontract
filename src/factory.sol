@@ -1,5 +1,5 @@
 // SPDX-License_Identifier:MIT
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.20;
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./interface/ICompound.sol";
 import "./SpendNest.sol";
@@ -37,7 +37,7 @@ contract factory {
 
     function createAccount() external {
         address _owner = msg.sender;
-        SpendNest newContract = new SpendNest(address(this), tokenAccepted, compound,_owner);
+        SpendNest newContract = new SpendNest(address(this), tokenAccepted, compound ,_owner);
         childContracts.push(address(newContract));
         myAddress[_owner] = address(newContract);
         userExists[address(newContract)] = true;

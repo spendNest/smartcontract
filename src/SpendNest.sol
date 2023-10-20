@@ -1,5 +1,6 @@
 // SPDX-License_Identifier:MIT
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ICompound} from "./interface/ICompound.sol";
 import "./factory.sol";
 import "./interface/Ifactory.sol";
@@ -10,6 +11,7 @@ pragma solidity ^0.8.21;
 contract SpendNest {
     // how do we have access to money been shared
     // how do i know that i am been shared money
+    using  SafeERC20 for IERC20; 
 
     uint256 totalSavings;
     uint256 sharedBalance;
@@ -111,17 +113,13 @@ contract SpendNest {
 Deposit function
  */
     function depositFund(uint _amount) external {
-        address user = msg.sender;
-        checkUser(address(this));
-        uint256 senderBal = IERC20(TokenAccepted).balanceOf(user);
-        require(senderBal >= _amount, "senderBal not sufficient");
-        
-            IERC20(TokenAccepted).transferFrom(user, address(this), _amount);
-    
-        //userAccount storage _user = myAccount[user];
-        //_user.availableBalance += _amount;
-        emit Transfer(user, _amount, block.timestamp);
+        address _user = msg.sender;
+        uint256 senderBal = IERC20(TokenAccepted).balanceOf(_user);
+        require(senderBal > _amount, "senderBal not sufficient");
+            IERC20(TokenAccepted).safeTransferFrom(_user, address(this), _amount);
+        emit Transfer(_user, _amount, block.timestamp);
     }
+
 
     function transferBetweenOwnAcct(uint amount) external onlyOwner{
         sharedBalance += amount;
@@ -388,7 +386,7 @@ Deposit function
 
      */
     function lend(uint256 _amount) external {
-        address user = msg.sender;
+        // address user = msg.sender;
         address _compound = compound;
         address token = TokenAccepted;
         uint256 balance = totalSavings;

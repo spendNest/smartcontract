@@ -46,6 +46,7 @@ contract SpendNestTest is Test {
       SpendNest childBank = SpendNest(account);
       IERC20(usdc).approve(address(childBank), 800000000);
       childBank.depositFund(80000000);
+      IERC20(usdc).balanceOf(address(childBank));
        childBank.viewAccount();
        vm.startPrank(user1);
        childBank.withdrawFund(10000);
