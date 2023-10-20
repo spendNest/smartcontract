@@ -115,13 +115,16 @@ Deposit function
         checkUser(address(this));
         uint256 senderBal = IERC20(TokenAccepted).balanceOf(user);
         require(senderBal >= _amount, "senderBal not sufficient");
-        require(
-            IERC20(TokenAccepted).transferFrom(user, address(this), _amount),
-            "transfer Failed"
-        );
+        
+            IERC20(TokenAccepted).transferFrom(user, address(this), _amount);
+    
         //userAccount storage _user = myAccount[user];
         //_user.availableBalance += _amount;
         emit Transfer(user, _amount, block.timestamp);
+    }
+
+    function transferBetweenOwnAcct(uint amount) external onlyOwner{
+        sharedBalance += amount;
     }
 
     /**
