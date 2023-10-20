@@ -1,4 +1,4 @@
-// SPDX-License_Identifier:MIT
+// SPDX-License-Identifier:MIT
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {ICompound} from "./interface/ICompound.sol";
 import "./factory.sol";

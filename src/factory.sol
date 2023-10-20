@@ -1,4 +1,4 @@
-// SPDX-License_Identifier:MIT
+// SPDX-License-Identifier:MIT
 pragma solidity ^0.8.21;
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./interface/ICompound.sol";
