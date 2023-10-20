@@ -7,7 +7,7 @@
 //     --verify \
 //     src/SpendNest.sol:SpendNest
 
-// // deploy factory
+// deploy factory
 // forge create --rpc-url "https://polygon-mumbai.g.alchemy.com/v2/yrpAusNFJVN45241TJqfwSDpMuSWwOIa"\
 //     --private-key a495703354cff429858008a639852747da03d8a59e6822a846a635325848f489 \
 //     --etherscan-api-key 9K4DSZ3DW44K62C3XKUEUSVXS1WD6KDTWG \
