@@ -122,9 +122,9 @@ contract SpendNest {
         uint256 indexed time
     );
 
-    constructor(address _factory) {
+    constructor(address _factory, address _token) {
         factory = Ifactory(_factory);
-        TokenAccepted = factory.tokenAddress();
+        TokenAccepted = _token;
         owner = msg.sender;
     }
 
@@ -133,23 +133,6 @@ contract SpendNest {
 
         _;
     }
-
-    // function createAccount() external {
-    //     address user = msg.sender;
-    //     require(accountCreated[user] == false, "ACCOUNT_ALREADY_EXIST");
-    //     accountCreated[user] = true;
-    //     userAccount memory newUser = userAccount({
-    //         totalSavings: 0,
-    //         availableBalance: 0,
-    //         sharedBalance: 0,
-    //         noOfClubs: 0,
-    //         BorrowedAmount: 0,
-    //         AmountToBePayedBack: 0
-    //     });
-
-    //     myAccount[user] = newUser;
-    // }
-
     /**
      *
      * userExists
@@ -165,13 +148,13 @@ Deposit function
  */
     function depositFund(uint _amount) external {
         address user = msg.sender;
-        checkUser(user);
-        uint256 senderBal = IERC20(TokenAccepted).balanceOf(user);
-        require(senderBal >= _amount, "senderBal not sufficient");
-        require(
-            IERC20(TokenAccepted).transferFrom(user, address(this), _amount),
-            "transfer Failed"
-        );
+        //checkUser(user);
+        // uint256 senderBal = IERC20(TokenAccepted).balanceOf(user);
+        // require(senderBal >= _amount, "senderBal not sufficient");
+        // require(
+        //     IERC20(TokenAccepted).transferFrom(user, address(this), _amount),
+        //     "transfer Failed"
+        // );
         //userAccount storage _user = myAccount[user];
         //_user.availableBalance += _amount;
         emit Transfer(user, _amount, block.timestamp);
