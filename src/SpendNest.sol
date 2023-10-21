@@ -1,67 +1,29 @@
 // SPDX-License-Identifier:MIT
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ICompound} from "./interface/ICompound.sol";
 import "./factory.sol";
-pragma solidity ^0.8.20;
+import "./interface/Ifactory.sol";
+pragma solidity ^0.8.21;
 
-interface Ifactory {
-    function createAcount() external;
 
-    function _returnAddress(
-        address _contractOwner
-    ) external view returns (address);
-
-    function tokenAddress() external view returns (address);
-
-    function userExist(address _user) external view returns (bool);
-
-    function createPublicClubs(
-        string memory _clubName,
-        uint256 _startDate,
-        uint256 _endDate,
-        uint256 _savingsGoal
-    ) external;
-
-    function joinSavingsClub(string memory _clubName) external;
-
-    function addFundSavingsClub(
-        string memory _clubName,
-        uint256 _amount
-    ) external;
-
-    function showPublicData()
-        external
-        view
-        returns (
-            string[] memory,
-            uint[] memory,
-            uint[] memory,
-            uint[] memory,
-            uint[] memory
-        );
-
-    function showMyPublicSavings(
-        string memory _clubName
-    ) external view returns (uint);
-
-    function withdrawPublicClub(string memory _clubName) external;
-}
 
 contract SpendNest {
     // how do we have access to money been shared
     // how do i know that i am been shared money
+
+
+    /**
+     * @dev STATE VARIABLES
+     */
+    using  SafeERC20 for IERC20; 
 
     uint256 totalSavings;
     uint256 sharedBalance;
     uint256 noOfClubs;
     uint256 BorrowedAmount;
     uint256 AmountToBePayedBack;
-    // sharedFund mysharedFund;
-
-    // struct sharedFund{
-
-    //     mapping(address=>uint256) yourSharedAmount;
-    // }
+    
 
     struct personalClubCreated {
         string clubName;
@@ -84,7 +46,6 @@ contract SpendNest {
     address owner;
     address compound;
 
-    // collect payment as sDai
 
     // EVENTS
     event Transfer(
@@ -122,10 +83,11 @@ contract SpendNest {
         uint256 indexed time
     );
 
-    constructor(address _factory, address _token) {
+    constructor(address _factory, address _token, address _compound, address _owner) {
         factory = Ifactory(_factory);
         TokenAccepted = _token;
-        owner = msg.sender;
+        compound = _compound;
+        owner = _owner;
     }
 
     modifier onlyOwner() {
@@ -134,53 +96,49 @@ contract SpendNest {
         _;
     }
 
-    // function createAccount() external {
-    //     address user = msg.sender;
-    //     require(accountCreated[user] == false, "ACCOUNT_ALREADY_EXIST");
-    //     accountCreated[user] = true;
-    //     userAccount memory newUser = userAccount({
-    //         totalSavings: 0,
-    //         availableBalance: 0,
-    //         sharedBalance: 0,
-    //         noOfClubs: 0,
-    //         BorrowedAmount: 0,
-    //         AmountToBePayedBack: 0
-    //     });
 
-    //     myAccount[user] = newUser;
-    // }
 
     /**
-     *
-     * userExists
+     * @dev userExists
+     * @param _user  checks if the user exists
      */
 
     function checkUser(address _user) internal view {
-        require(factory.userExist(_user), "RECEIVER_DOES_NOT_EXIST");
-    }
-
-    //Depositing stable_coin ___they can deposit to our contract
-    /**
-Deposit function
- */
-    function depositFund(uint _amount) external {
-        address user = msg.sender;
-        checkUser(user);
-        uint256 senderBal = IERC20(TokenAccepted).balanceOf(user);
-        require(senderBal >= _amount, "senderBal not sufficient");
-        require(
-            IERC20(TokenAccepted).transferFrom(user, address(this), _amount),
-            "transfer Failed"
-        );
-        //userAccount storage _user = myAccount[user];
-        //_user.availableBalance += _amount;
-        emit Transfer(user, _amount, block.timestamp);
+        require(factory.userExist(_user) == true, "RECEIVER_DOES_NOT_EXIST");
     }
 
     /**
-     * View my fund
-    //  */
-    function viewAccount() external view returns (uint256, uint256, uint256, uint256, uint256, uint256) {
+     * @dev deposit token func.
+     * @param _amount  to be deposited uint.
+     */
+    function depositFund(uint256 _amount) external {
+        address _user = msg.sender;
+        uint256 senderBal = IERC20(TokenAccepted).balanceOf(_user);
+        require(senderBal > _amount, "senderBal not sufficient");
+            IERC20(TokenAccepted).safeTransferFrom(_user, address(this), _amount);
+        emit Transfer(_user, _amount, block.timestamp);
+    }
+
+    
+    /**
+     * 
+     * @param amount to be transferred
+     */
+    function transferBetweenOwnAcct(uint amount) external onlyOwner{
+        sharedBalance += amount;
+    }
+
+
+    /**
+     * @dev  returns user account details.
+     * @return available balance of an account.
+     * @return borrowed balance of an account.
+     * @return total savings of an account.
+     * @return shared balance with another user
+     * @return number of savings club a user is participating in.
+     * @return Amount plus interest to be payed back after borrowing.
+     */
+    function viewAccount() external view returns (uint256, uint256,  uint256, uint256,uint256, uint256) {
         address user = address(this);
         uint256 availableBal = IERC20(TokenAccepted).balanceOf(user);
         uint256 borrowedAmount = ICompound(compound).borrowBalanceOf(user);
@@ -194,19 +152,11 @@ Deposit function
         );
     }
 
-    // function withdraw(uint _amount, address _user) internal {
 
-    //     userAccount storage myBalance = myAccount[_user];
-    //     uint256 BalanceLeft = myBalance.availableBalance;
-    //     require(BalanceLeft >= _amount, "INSUFFICIENT_AMOUNT");
-    //     // uint amountLeft = BalanceLeft - _amount;
-    //     // myBalance.availableBalance = amountLeft;
-    // }
-
-    // withdrawing stable coin
-    /**
-     *Withdraw Fund
+    /** @dev Account withdrawal
+     * @param _amount withdraw uint to EOA.
      */
+
     function withdrawFund(uint _amount) external onlyOwner {
         require(
             IERC20(TokenAccepted).balanceOf(address(this)) >= _amount,
@@ -216,13 +166,11 @@ Deposit function
         emit Withdrawal(owner, _amount, block.timestamp);
     }
 
-    /**
-     *Total savings
-     */
 
-    //token transfer between people having account on the system
     /**
-     * Transfer within address registered on the contract
+     * @dev transfer between users.
+     * @param _receiver another account to receive funds address
+     * @param _amount to transfer from sender to receiver uint
      */
     function transferFund(address _receiver, uint _amount) external onlyOwner {
         checkUser(_receiver);
@@ -234,11 +182,11 @@ Deposit function
         emit FundWithdraw(msg.sender, _receiver, _amount, block.timestamp);
     }
 
-    //Granting someone access to spend fund - whitelist address
-
+    
     /**
-     * Grant users Access to spend your fund
-     *
+     * @dev ERC20 approval
+     * @param _spender to receive allowance
+     * @param _amount transfer uint
      */
     function grantAccessToFund(
         address _spender,
@@ -249,10 +197,13 @@ Deposit function
         sharedBalance += _amount;
         sharedUsers.push(_spender);
     }
+    
 
-    // Savings club_ ___ deposit to spark protocol
     /**
-     * create savings club
+     * @dev personal savings
+     * @param _clubName savings club string
+     * @param _endDate timestamp to withdraw savings uint
+     * @param _savingsGoal amount in total to save in club uint
      */
     function createPersonalSavingsClub(
         string memory _clubName,
@@ -264,6 +215,7 @@ Deposit function
             "CLUB_NAME_ALREADY_EXIST"
         );
 
+    //lending & borrowing __ only people that have savings in thesaving club can borrow
         personalClubCreated storage newClub = personalClubs[address(this)][
             _clubName
         ];
@@ -272,12 +224,13 @@ Deposit function
         newClub.startDate = block.timestamp;
         newClub.endDate = _endDate;
         newClub.savingsGoal = _savingsGoal;
-
         PersonalClubName[address(this)].push(_clubName);
+        stringExists[address(this)][_clubName] = true;
     }
 
-    /**
-     * Return my personal club
+
+    /** @dev returns array of structs of all personal savings
+     * @return all personal savings created struct array
      */
     function showMyPersonalCreatedClub()
         public
@@ -299,8 +252,11 @@ Deposit function
         return clubsCreated;
     }
 
+
     /**
-     * show single personal created club
+     * @dev returns just a single club
+     * @param _clubName  personalClub string to be returned
+     * @return a club
      */
     function showSingleClub(
         string calldata _clubName
@@ -308,8 +264,11 @@ Deposit function
         return personalClubs[address(this)][_clubName];
     }
 
+
     /**
-     *Add money to your savings
+     * @dev Personal savings deposit func 
+     * @param _clubName savings to be deposited string
+     * @param _amount amount to be added uint
      */
     function depositToPersonalClub(
         string calldata _clubName,
@@ -331,17 +290,11 @@ Deposit function
         emit PersonalClubDeposit(msg.sender, _amount, block.timestamp);
     }
 
-    // function loanToPayment() external returns (uint) {
-    //     address _compound = compound;
-    //     userAccount storage _myOwnAccount = myAccount[_owner];
-    //     ICompound(_compound).getUtilization();
-    //     Icompound
-
-    // }
 
     /**
-    withdraw personal savings
-    */
+     *  @dev personal savings withdrawal func
+     * @param _clubName  savings to withdraw string
+     */
     function withdrawPersonalSavings(
         string memory _clubName
     ) external onlyOwner {
@@ -359,9 +312,17 @@ Deposit function
         _myClub.Personalsavings = 0;
         totalSavings -= savings;
 
-        ICompound(compound).withdraw(address(this), savings);
+        ICompound(compound).withdraw(TokenAccepted, savings);
     }
 
+
+    /**
+     * @dev create a public savings club
+     * @param _clubName  new savings club string
+     * @param _startDate time in seconds to start the savings club
+     * @param _endDate time in seconds to end
+     * @param _savingsGoal amount to be saved in total
+     */
     function createPublicSav(
         string memory _clubName,
         uint256 _startDate,
@@ -376,26 +337,35 @@ Deposit function
         );
     }
 
+
+    /**
+     * @dev participate in a public savings
+     * @param _clubName  string of the club to join
+     */
+
     function joinPublicClub(string memory _clubName) external {
         factory.joinSavingsClub(_clubName);
     }
 
+
+    /**
+     * @dev fund a public savings club
+     * @param _clubName club string to add funds to
+     * @param _amount amount to be added uint
+     */
     function addFundpublic(string memory _clubName, uint256 _amount) external {
         IERC20(TokenAccepted).approve(compound, _amount);
-        factory.addFundSavingsClub(_clubName, _amount);
+        factory.addFundSavingsClub(_clubName, _amount, address(this));
+        ICompound(compound).supply(TokenAccepted, _amount);
         totalSavings += _amount;
         emit PublicClubDeposit(address(this), _amount, block.timestamp);
     }
 
-    /**
-     *remove fund from saving
-     */
-    function withdrawPublicSavingsClub(string memory _clubName) external {
-
-    }
+    
 
     /**
-     * Return all public deposit
+     *
+     * @return Return all public club details 
      */
     function getPublicSavingData()
         external
@@ -413,35 +383,38 @@ Deposit function
 
 
     /**
-     *show public club savings
+     *@param _clubName club string to show balanceOf
+     *@return uint amount of public club total funds
      */
     function getPublicClubFund(
         string memory _clubName
     ) external view returns (uint256) {
-        factory.showMyPublicSavings(_clubName);
+        uint256 amount = factory.showMyPublicSavings(_clubName);
+        return amount;
     }
 
+
     /**
-     * To return withdraw from public club
+     * @dev public savings withdrawals
+     * @param _clubName string name of club to withdraw from
+     * @return uint balance after withdrawal
      */
-
-    function withdrawPublic(string memory _clubName) external {
-        factory.withdrawPublicClub(_clubName);
+    function withdrawPublic(string memory _clubName) external returns(uint) {
+   (uint256 _balance, uint256 _amount)= factory.withdrawPublicClub(_clubName, address(this));
+    totalSavings -= _amount;
+        ICompound(compound).withdraw(TokenAccepted, _balance);
+        return totalSavings;
     }
 
-    
 
-    //lending & borrowing __ only people that have savings in thesaving club can borrow
-    //Comet,Polygon, Tableland and Compound.
     /**
-     *Borrow
+     * @notice lending & borrowing __ only people that have savings in thesaving club can borrow
      * user should only be able to borrow 20% of savings 
-     * base asset can be borrowed using withdraw function
      * borrow usdc
-
+     * @dev for borrowing 
+     * @param _amount uint to borrow
      */
     function lend(uint256 _amount) external {
-        address user = msg.sender;
         address _compound = compound;
         address token = TokenAccepted;
         uint256 balance = totalSavings;
@@ -449,14 +422,14 @@ Deposit function
         require(_amount <= percent, "ONLY_20%_CAN_BE_BORROWED");
         BorrowedAmount += _amount;
         ICompound(_compound).withdraw(token, _amount);
-        //_myOwnAccount.availableBalance += _amount;
-        emit Borrowed(user, _amount, block.timestamp);
+        emit Borrowed(address(this), _amount, block.timestamp);
     }
 
     /**
-     * Payback lend Protocol
+     * @dev Payback lend 
+     * @return borrowed balance after payback
      */
-    function payback() external {
+    function payback() external returns(uint256){
         address user = address(this);
         uint256 borrowBal = ICompound(compound).borrowBalanceOf(user);
         require(IERC20(TokenAccepted).balanceOf(user) >= borrowBal, "Insufficient availableBal.");
@@ -464,11 +437,17 @@ Deposit function
         ICompound(compound).supply(TokenAccepted, borrowBal);
         BorrowedAmount = 0;
         AmountToBePayedBack = 0;
+        return BorrowedAmount;
     }
 
 
     /**
-     * returns the amount to be paid back to com
+     * @dev borrowRate used
+     * @return the amount to be paid back after borrow uint
      */
-    function payBackAmount() public {}
+    function payBackAmount() public view returns(uint256){
+         address user = address(this);
+        uint256 borrowBal = ICompound(compound).borrowBalanceOf(user);
+        return(borrowBal);
+    }
 }
