@@ -64,7 +64,7 @@ contract SpendNest {
 
     event PersonalClubDeposit(
         address indexed sender,
-        uint indexed amount,
+        uint256 indexed amount,
         uint256 indexed time
     );
     event PublicClubDeposit(
