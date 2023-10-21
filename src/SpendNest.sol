@@ -6,31 +6,24 @@ import "./factory.sol";
 import "./interface/Ifactory.sol";
 pragma solidity ^0.8.21;
 
-
-
 contract SpendNest {
-    // how do we have access to money been shared
-    // how do i know that i am been shared money
-
-
     /**
      * @dev STATE VARIABLES
      */
-    using  SafeERC20 for IERC20; 
+    using SafeERC20 for IERC20;
 
     uint256 totalSavings;
     uint256 sharedBalance;
     uint256 noOfClubs;
     uint256 BorrowedAmount;
     uint256 AmountToBePayedBack;
-    
 
     struct personalClubCreated {
         string clubName;
-        uint startDate;
-        uint endDate;
-        uint savingsGoal;
-        uint Personalsavings;
+        uint256 startDate;
+        uint256 endDate;
+        uint256 savingsGoal;
+        uint256 Personalsavings;
     }
 
     mapping(address => bool) accountCreated;
@@ -46,8 +39,10 @@ contract SpendNest {
     address owner;
     address compound;
 
-
-    // EVENTS
+    /**
+     * @notice EVENTS
+     *
+     */
     event Transfer(
         address indexed user,
         uint256 indexed amount,
@@ -63,7 +58,7 @@ contract SpendNest {
     event FundWithdraw(
         address sender,
         address indexed receiver,
-        uint indexed amount,
+        uint256 indexed amount,
         uint256 indexed time
     );
 
@@ -74,7 +69,7 @@ contract SpendNest {
     );
     event PublicClubDeposit(
         address indexed sender,
-        uint indexed amount,
+        uint256 indexed amount,
         uint256 indexed time
     );
     event Borrowed(
@@ -83,7 +78,12 @@ contract SpendNest {
         uint256 indexed time
     );
 
-    constructor(address _factory, address _token, address _compound, address _owner) {
+    constructor(
+        address _factory,
+        address _token,
+        address _compound,
+        address _owner
+    ) {
         factory = Ifactory(_factory);
         TokenAccepted = _token;
         compound = _compound;
@@ -95,8 +95,6 @@ contract SpendNest {
 
         _;
     }
-
-
 
     /**
      * @dev userExists
@@ -115,19 +113,17 @@ contract SpendNest {
         address _user = msg.sender;
         uint256 senderBal = IERC20(TokenAccepted).balanceOf(_user);
         require(senderBal > _amount, "senderBal not sufficient");
-            IERC20(TokenAccepted).safeTransferFrom(_user, address(this), _amount);
+        IERC20(TokenAccepted).safeTransferFrom(_user, address(this), _amount);
         emit Transfer(_user, _amount, block.timestamp);
     }
 
-    
     /**
-     * 
-     * @param amount to be transferred
+     * @notice this func increases the state of shared bal.
+     * @param amount to share
      */
-    function transferBetweenOwnAcct(uint amount) external onlyOwner{
+    function transferBetweenOwnAcct(uint256 amount) external onlyOwner {
         sharedBalance += amount;
     }
-
 
     /**
      * @dev  returns user account details.
@@ -138,7 +134,11 @@ contract SpendNest {
      * @return number of savings club a user is participating in.
      * @return Amount plus interest to be payed back after borrowing.
      */
-    function viewAccount() external view returns (uint256, uint256,  uint256, uint256,uint256, uint256) {
+    function viewAccount()
+        external
+        view
+        returns (uint256, uint256, uint256, uint256, uint256, uint256)
+    {
         address user = address(this);
         uint256 availableBal = IERC20(TokenAccepted).balanceOf(user);
         uint256 borrowedAmount = ICompound(compound).borrowBalanceOf(user);
@@ -152,12 +152,11 @@ contract SpendNest {
         );
     }
 
-
     /** @dev Account withdrawal
      * @param _amount withdraw uint to EOA.
      */
 
-    function withdrawFund(uint _amount) external onlyOwner {
+    function withdrawFund(uint256 _amount) external onlyOwner {
         require(
             IERC20(TokenAccepted).balanceOf(address(this)) >= _amount,
             "Insufficient fund"
@@ -166,13 +165,15 @@ contract SpendNest {
         emit Withdrawal(owner, _amount, block.timestamp);
     }
 
-
     /**
      * @dev transfer between users.
      * @param _receiver another account to receive funds address
      * @param _amount to transfer from sender to receiver uint
      */
-    function transferFund(address _receiver, uint _amount) external onlyOwner {
+    function transferFund(
+        address _receiver,
+        uint256 _amount
+    ) external onlyOwner {
         checkUser(_receiver);
         require(
             IERC20(TokenAccepted).balanceOf(address(this)) >= _amount,
@@ -182,7 +183,6 @@ contract SpendNest {
         emit FundWithdraw(msg.sender, _receiver, _amount, block.timestamp);
     }
 
-    
     /**
      * @dev ERC20 approval
      * @param _spender to receive allowance
@@ -190,14 +190,13 @@ contract SpendNest {
      */
     function grantAccessToFund(
         address _spender,
-        uint _amount
+        uint256 _amount
     ) external onlyOwner {
         checkUser(_spender);
         IERC20(TokenAccepted).approve(_spender, _amount);
         sharedBalance += _amount;
         sharedUsers.push(_spender);
     }
-    
 
     /**
      * @dev personal savings
@@ -214,8 +213,6 @@ contract SpendNest {
             stringExists[address(this)][_clubName] == false,
             "CLUB_NAME_ALREADY_EXIST"
         );
-
-    //lending & borrowing __ only people that have savings in thesaving club can borrow
         personalClubCreated storage newClub = personalClubs[address(this)][
             _clubName
         ];
@@ -228,7 +225,6 @@ contract SpendNest {
         stringExists[address(this)][_clubName] = true;
     }
 
-
     /** @dev returns array of structs of all personal savings
      * @return all personal savings created struct array
      */
@@ -238,7 +234,7 @@ contract SpendNest {
         returns (personalClubCreated[] memory)
     {
         string[] memory _myClubName = PersonalClubName[address(this)];
-        uint clubLength = _myClubName.length;
+        uint256 clubLength = _myClubName.length;
         personalClubCreated[] memory clubsCreated = new personalClubCreated[](
             clubLength
         );
@@ -252,7 +248,6 @@ contract SpendNest {
         return clubsCreated;
     }
 
-
     /**
      * @dev returns just a single club
      * @param _clubName  personalClub string to be returned
@@ -264,9 +259,8 @@ contract SpendNest {
         return personalClubs[address(this)][_clubName];
     }
 
-
     /**
-     * @dev Personal savings deposit func 
+     * @dev Personal savings deposit func
      * @param _clubName savings to be deposited string
      * @param _amount amount to be added uint
      */
@@ -276,8 +270,7 @@ contract SpendNest {
     ) external {
         address token = TokenAccepted;
         address _compound = compound;
-        //userAccount storage _myOwnAccount = myAccount[_owner];
-        uint _balance = IERC20(TokenAccepted).balanceOf(address(this));
+        uint256 _balance = IERC20(TokenAccepted).balanceOf(address(this));
         require(_balance >= _amount, "INSUFFICIENT_BALANCE");
         IERC20(token).approve(_compound, _amount);
         ICompound(_compound).supply(token, _amount);
@@ -289,7 +282,6 @@ contract SpendNest {
 
         emit PersonalClubDeposit(msg.sender, _amount, block.timestamp);
     }
-
 
     /**
      *  @dev personal savings withdrawal func
@@ -315,7 +307,6 @@ contract SpendNest {
         ICompound(compound).withdraw(TokenAccepted, savings);
     }
 
-
     /**
      * @dev create a public savings club
      * @param _clubName  new savings club string
@@ -337,7 +328,6 @@ contract SpendNest {
         );
     }
 
-
     /**
      * @dev participate in a public savings
      * @param _clubName  string of the club to join
@@ -346,7 +336,6 @@ contract SpendNest {
     function joinPublicClub(string memory _clubName) external {
         factory.joinSavingsClub(_clubName);
     }
-
 
     /**
      * @dev fund a public savings club
@@ -361,26 +350,23 @@ contract SpendNest {
         emit PublicClubDeposit(address(this), _amount, block.timestamp);
     }
 
-    
-
     /**
      *
-     * @return Return all public club details 
+     * @return Return all public club details
      */
     function getPublicSavingData()
         external
         view
         returns (
             string[] memory,
-            uint[] memory,
-            uint[] memory,
-            uint[] memory,
-            uint[] memory
+            uint256[] memory,
+            uint256[] memory,
+            uint256[] memory,
+            uint256[] memory
         )
     {
         factory.showPublicData();
     }
-
 
     /**
      *@param _clubName club string to show balanceOf
@@ -393,25 +379,28 @@ contract SpendNest {
         return amount;
     }
 
-
     /**
      * @dev public savings withdrawals
      * @param _clubName string name of club to withdraw from
      * @return uint balance after withdrawal
      */
-    function withdrawPublic(string memory _clubName) external returns(uint) {
-   (uint256 _balance, uint256 _amount)= factory.withdrawPublicClub(_clubName, address(this));
-    totalSavings -= _amount;
+    function withdrawPublic(
+        string memory _clubName
+    ) external returns (uint256) {
+        (uint256 _balance, uint256 _amount) = factory.withdrawPublicClub(
+            _clubName,
+            address(this)
+        );
+        totalSavings -= _amount;
         ICompound(compound).withdraw(TokenAccepted, _balance);
         return totalSavings;
     }
 
-
     /**
      * @notice lending & borrowing __ only people that have savings in thesaving club can borrow
-     * user should only be able to borrow 20% of savings 
+     * user should only be able to borrow 20% of savings
      * borrow usdc
-     * @dev for borrowing 
+     * @dev for borrowing
      * @param _amount uint to borrow
      */
     function lend(uint256 _amount) external {
@@ -426,13 +415,16 @@ contract SpendNest {
     }
 
     /**
-     * @dev Payback lend 
+     * @dev Payback lend
      * @return borrowed balance after payback
      */
-    function payback() external returns(uint256){
+    function payback() external returns (uint256) {
         address user = address(this);
         uint256 borrowBal = ICompound(compound).borrowBalanceOf(user);
-        require(IERC20(TokenAccepted).balanceOf(user) >= borrowBal, "Insufficient availableBal.");
+        require(
+            IERC20(TokenAccepted).balanceOf(user) >= borrowBal,
+            "Insufficient availableBal."
+        );
         IERC20(TokenAccepted).approve(compound, borrowBal);
         ICompound(compound).supply(TokenAccepted, borrowBal);
         BorrowedAmount = 0;
@@ -440,14 +432,13 @@ contract SpendNest {
         return BorrowedAmount;
     }
 
-
     /**
      * @dev borrowRate used
      * @return the amount to be paid back after borrow uint
      */
-    function payBackAmount() public view returns(uint256){
-         address user = address(this);
+    function payBackAmount() public view returns (uint256) {
+        address user = address(this);
         uint256 borrowBal = ICompound(compound).borrowBalanceOf(user);
-        return(borrowBal);
+        return (borrowBal);
     }
 }
