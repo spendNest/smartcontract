@@ -150,7 +150,7 @@ function checkClubExist(string memory _name) internal view returns (bool) {
             block.timestamp >= createClub.startDate,
             "SAVINGS_CLUB_NOT_STARTED"
         );
-        require(_balance >= _amount, "INSUFFICIENT_BALANCE");
+        // require(_balance >= _amount, "INSUFFICIENT_BALANCE");
         require(block.timestamp >= createClub.endDate, "SAVINGS_ENDED");
         require(createClub.aUser[_user], "NOT_A_USER");
         // IERC20(token).approve(_compound, _amount);

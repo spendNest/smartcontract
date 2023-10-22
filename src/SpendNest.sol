@@ -371,6 +371,7 @@ Deposit function
 
     function joinPublicClub(string memory _clubName) external {
         factory.joinSavingsClub(_clubName);
+        noOfClubs += 1;
     }
 
     function addFundpublic(string memory _clubName, uint256 _amount) external {
