@@ -366,6 +366,7 @@ Deposit function
             _endDate,
             _savingsGoal
         );
+        noOfClubs += 1;
     }
 
     function joinPublicClub(string memory _clubName) external {
