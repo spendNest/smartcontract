@@ -44,4 +44,8 @@ interface Ifactory {
     ) external view returns (uint);
 
     function withdrawPublicClub(string memory _clubName, address _user) external returns(uint256, uint256);
+    
+       function showPublicMember(
+        string memory _clubName
+    ) external view returns (bool) ;
 }

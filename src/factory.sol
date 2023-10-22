@@ -1,8 +1,8 @@
 // SPDX-License_Identifier:MIT
-pragma solidity ^0.8.20;
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "./interface/ICompound.sol";
 import "./SpendNest.sol";
+pragma solidity ^0.8.21;
 
 contract factory {
     address[] childContracts;
@@ -192,12 +192,41 @@ function checkClubExist(string memory _name) internal view returns (bool) {
         return (clubName, startDate, endDate, savingsGoal, totalParticipant);
     }
 
+/**
+* @notice This function returns single public club
+* @dev the returns are from the club created
+* @param _name the name of the club you want to view
+ */
+function viewSinglePublic(string memory _name) external view returns(string memory, uint256, uint256, uint256, uint256) {
+    ClubCreated storage currentClub = publicClubs[_name];
+    string memory _clubName = currentClub.clubName;
+    uint _startDate = currentClub.startDate;
+    uint _endDate = currentClub.endDate;
+    uint _savingsGoal = currentClub.savingsGoal;
+    uint _totalParticipant = currentClub.totalParticipant;
+
+    return(_clubName, _startDate, _endDate, _savingsGoal, _totalParticipant);
+
+
+}
 
     function showMyPublicSavings(
         string memory _clubName
     ) external view returns (uint256) {
         ClubCreated storage createClub = publicClubs[_clubName];
         return createClub.myBalance[msg.sender];
+    }
+
+    /**
+    * @notice Shows if the msg.sender is a user 
+    * @param _clubName the name of the club
+    * @return the function retuturns bool
+     */
+    function showPublicMember(
+        string memory _clubName
+    ) external view returns (bool) {
+        ClubCreated storage createClub = publicClubs[_clubName];
+        return createClub.aUser[msg.sender];
     }
 
     /**

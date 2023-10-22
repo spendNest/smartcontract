@@ -6,18 +6,17 @@ import "./factory.sol";
 import "./interface/Ifactory.sol";
 pragma solidity ^0.8.21;
 
-
-
 contract SpendNest {
     // how do we have access to money been shared
     // how do i know that i am been shared money
-    using  SafeERC20 for IERC20; 
+    using SafeERC20 for IERC20;
 
     uint256 totalSavings;
     uint256 sharedBalance;
     uint256 noOfClubs;
     uint256 BorrowedAmount;
     uint256 AmountToBePayedBack;
+    uint256 PersonalSavings;
     // sharedFund mysharedFund;
 
     // struct sharedFund{
@@ -83,8 +82,18 @@ contract SpendNest {
         uint256 indexed amount,
         uint256 indexed time
     );
+    event SavingsWithdrawn(
+        address indexed sender,
+        uint256 indexed amount,
+        uint256 indexed time
+    );
 
-    constructor(address _factory, address _token, address _compound, address _owner) {
+    constructor(
+        address _factory,
+        address _token,
+        address _compound,
+        address _owner
+    ) {
         factory = Ifactory(_factory);
         TokenAccepted = _token;
         compound = _compound;
@@ -96,8 +105,6 @@ contract SpendNest {
 
         _;
     }
-
-
 
     /**
      *
@@ -115,13 +122,12 @@ Deposit function
     function depositFund(uint _amount) external {
         address _user = msg.sender;
         uint256 senderBal = IERC20(TokenAccepted).balanceOf(_user);
-        require(senderBal > _amount, "senderBal not sufficient");
-            IERC20(TokenAccepted).safeTransferFrom(_user, address(this), _amount);
+        // require(senderBal > _amount, "senderBal not sufficient");
+        IERC20(TokenAccepted).safeTransferFrom(_user, address(this), _amount);
         emit Transfer(_user, _amount, block.timestamp);
     }
 
-
-    function transferBetweenOwnAcct(uint amount) external onlyOwner{
+    function transferBetweenOwnAcct(uint amount) external onlyOwner {
         sharedBalance += amount;
     }
 
@@ -129,7 +135,11 @@ Deposit function
      * View my fund
     //  */
     // issue wit borrow balance
-    function viewAccount() external view returns (uint256, uint256,  uint256, uint256,uint256, uint256) {
+    function viewAccount()
+        external
+        view
+        returns (uint256, uint256, uint256, uint256, uint256, uint256)
+    {
         address user = address(this);
         uint256 availableBal = IERC20(TokenAccepted).balanceOf(user);
         uint256 borrowedAmount = ICompound(compound).borrowBalanceOf(user);
@@ -142,8 +152,6 @@ Deposit function
             AmountToBePayedBack
         );
     }
-
-  
 
     // withdrawing stable coin
     /**
@@ -176,6 +184,48 @@ Deposit function
         emit FundWithdraw(msg.sender, _receiver, _amount, block.timestamp);
     }
 
+    /**
+     * @notice Add fund to personal savings
+     * @dev compound protocol was called to supply the available token
+     * @param _amount Value of the token to deposit
+     */
+
+    function addPersonalSavings(uint256 _amount) external {
+        address token = TokenAccepted;
+        address _compound = compound;
+        uint _balance = IERC20(token).balanceOf(address(this));
+        require(_balance >= _amount, "INSUFFICIENT_BALANCE");
+        IERC20(token).approve(_compound, _amount);
+        ICompound(_compound).supply(token, _amount);
+        totalSavings += _amount;
+        PersonalSavings += _amount;
+        emit PersonalClubDeposit(msg.sender, _amount, block.timestamp);
+    }
+
+    /**
+ * @notice withdraw from personal savings
+ * @dev compound protocol was called to withdraw the available token
+ * @param  _amount Value of the token to deposit
+
+  */
+
+    function withdrawSavings(uint _amount) external {
+        require(PersonalSavings >= _amount, "INSUFFICIENT_AMOUNT");
+        PersonalSavings -= _amount;
+        totalSavings -= _amount;
+        ICompound(compound).withdraw(TokenAccepted, _amount);
+        emit SavingsWithdrawn(msg.sender, _amount, block.timestamp);
+    }
+
+    /**
+     * @notice personal savings
+     * @return  all personal savins in state
+     */
+
+    function myPersonalSavings() external view returns (uint256) {
+        return PersonalSavings;
+    }
+
     //Granting someone access to spend fund - whitelist address
 
     /**
@@ -191,6 +241,7 @@ Deposit function
         sharedBalance += _amount;
         sharedUsers.push(_spender);
     }
+
     // Savings club_ ___ deposit to spark protocol
     /**
      * create savings club
@@ -353,7 +404,6 @@ Deposit function
         factory.showPublicData();
     }
 
-
     /**
      *show public club savings
      */
@@ -364,17 +414,30 @@ Deposit function
     }
 
     /**
-     * To return withdraw from public club
+     * @notice Shows if the msg.sender is a user
+     * @param _clubName the name of the club
+     * @return the function retuturns bool
      */
-    //  function 
 
-    function withdrawPublic(string memory _clubName) external returns(uint) {
-   (uint256 _balance, uint256 _amount)= factory.withdrawPublicClub(_clubName, address(this));
-    totalSavings -= _amount;
-        ICompound(compound).withdraw(TokenAccepted, _balance);
+    function memberPublicClub(
+        string memory _clubName
+    ) external view returns (bool) {
+        return factory.showPublicMember(_clubName);
     }
 
-    
+    /**
+     * To return withdraw from public club
+     */
+    //  function
+
+    function withdrawPublic(string memory _clubName) external returns (uint) {
+        (uint256 _balance, uint256 _amount) = factory.withdrawPublicClub(
+            _clubName,
+            address(this)
+        );
+        totalSavings -= _amount;
+        ICompound(compound).withdraw(TokenAccepted, _balance);
+    }
 
     //lending & borrowing __ only people that have savings in thesaving club can borrow
     //Comet,Polygon, Tableland and Compound.
@@ -404,20 +467,22 @@ Deposit function
     function payback() external {
         address user = address(this);
         uint256 borrowBal = ICompound(compound).borrowBalanceOf(user);
-        require(IERC20(TokenAccepted).balanceOf(user) >= borrowBal, "Insufficient availableBal.");
+        require(
+            IERC20(TokenAccepted).balanceOf(user) >= borrowBal,
+            "Insufficient availableBal."
+        );
         IERC20(TokenAccepted).approve(compound, borrowBal);
         ICompound(compound).supply(TokenAccepted, borrowBal);
         BorrowedAmount = 0;
         AmountToBePayedBack = 0;
     }
 
-
     /**
      * returns the amount to be paid back to com
      */
-    function payBackAmount() public returns(uint256){
-         address user = address(this);
+    function payBackAmount() public view returns (uint256) {
+        address user = address(this);
         uint256 borrowBal = ICompound(compound).borrowBalanceOf(user);
-        return(borrowBal);
+        return (borrowBal);
     }
 }
