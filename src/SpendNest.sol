@@ -148,7 +148,7 @@ Deposit function
             availableBal,
             sharedBalance,
             noOfClubs,
-            borrowedAmount,
+            BorrowedAmount,
             AmountToBePayedBack
         );
     }
@@ -457,8 +457,8 @@ Deposit function
         uint256 balance = totalSavings;
         uint256 percent = ((20 * balance) / 100);
         require(_amount <= percent, "ONLY_20%_CAN_BE_BORROWED");
-        BorrowedAmount += _amount;
         ICompound(_compound).withdraw(token, _amount);
+        BorrowedAmount += _amount;
         //_myOwnAccount.availableBalance += _amount;
         emit Borrowed(address(this), _amount, block.timestamp);
     }
@@ -469,12 +469,13 @@ Deposit function
     function payback() external {
         address user = address(this);
         uint256 borrowBal = ICompound(compound).borrowBalanceOf(user);
+        uint _payback = BorrowedAmount + borrowBal;
         require(
             IERC20(TokenAccepted).balanceOf(user) >= borrowBal,
             "Insufficient availableBal."
         );
         IERC20(TokenAccepted).approve(compound, borrowBal);
-        ICompound(compound).supply(TokenAccepted, borrowBal);
+        ICompound(compound).supply(TokenAccepted, _payback);
         BorrowedAmount = 0;
         AmountToBePayedBack = 0;
     }
@@ -485,6 +486,7 @@ Deposit function
     function payBackAmount() public view returns (uint256) {
         address user = address(this);
         uint256 borrowBal = ICompound(compound).borrowBalanceOf(user);
+        uint256 _amount = borrowBal + BorrowedAmount;
         return (borrowBal);
     }
 }

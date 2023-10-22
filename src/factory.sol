@@ -25,6 +25,11 @@ contract factory {
     mapping(address => bool) userExists;
     mapping(string => ClubCreated) publicClubs;
 
+event AccountCreated(
+    address indexed creator,
+    address indexed factory
+
+);
     function set_Token(address _tokenAcepted) external {
         require(msg.sender == owner, "Not Owner");
         tokenAccepted = _tokenAcepted;
@@ -41,6 +46,8 @@ contract factory {
         childContracts.push(address(newContract));
         myAddress[_owner] = address(newContract);
         userExists[address(newContract)] = true;
+        emit AccountCreated(_owner, address(newContract));
+
     }
 
     function _returnAddress(
@@ -151,7 +158,7 @@ function checkClubExist(string memory _name) internal view returns (bool) {
             "SAVINGS_CLUB_NOT_STARTED"
         );
         // require(_balance >= _amount, "INSUFFICIENT_BALANCE");
-        require(block.timestamp >= createClub.endDate, "SAVINGS_ENDED");
+        require(block.timestamp <= createClub.endDate, "SAVINGS_ENDED");
         require(createClub.aUser[_user], "NOT_A_USER");
         // IERC20(token).approve(_compound, _amount);
         //IERC20(token).approve(_compound, _amount);
